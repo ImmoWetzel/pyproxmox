@@ -108,6 +108,10 @@ class pyproxmox:
         elif conn_type == "get":
             self.response = requests.get (self.full_url, verify=False, 
                                           cookies = self.ticket)
+        else :
+            print('ERROR: pyproxmox: connection type "%s" unknown. Nothing processed !!!' % conn_type)
+            self.returned_data={'status':{'code':'999','ok':False,'reason':'connection type "%s" unknown' % conn_type }}
+            return self.returned_data
 
         try:
             self.returned_data = self.response.json()
@@ -119,14 +123,14 @@ class pyproxmox:
             print("pyproxmox: Response: %s" % self.response)
             print("pyproxmox: Reason: %s" % self.response.reason)
             print("pyproxmox: RequestURL: %s" % self.response.url)
-            print "pyproxmox: Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1]))
+            print("pyproxmox: Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1])))
 
             if self.response.status_code==401 and (not sys._getframe(1).f_code.co_name == sys._getframe(0).f_code.co_name):
-                print "pyproxmox: try to recover connection auth - sometimes tickets are expired... just retry"
+                print("pyproxmox: try to recover connection auth - sometimes tickets are expired... just retry")
                 self.auth_class.setup_connection()
                 self.get_auth_data()
                 return_data=self.connect(conn_type, option, post_data)
-                print "pyproxmox: retry ... successful"
+                print("pyproxmox: retry ... successful")
                 return return_data
 
 
@@ -635,12 +639,12 @@ class pyproxmox:
         return data
     
     # KVM
-    def setVirtualMachineOptions(self,node,vmid,post_data):
+    def setVirtualMachineOptions(self, node, vmid, post_data):
         """Set KVM virtual machine options."""
-        data = self.connect('push',"nodes/%s/qemu/%s/config" % (node,vmid), post_data)
+        data = self.connect('post',"nodes/%s/qemu/%s/config" % (node, vmid), post_data)
         return data
 
-    def sendKeyEventVirtualMachine(self,node,vmid, key):
+    def sendKeyEventVirtualMachine(self, node, vmid, key):
         """Send key event to virtual machine"""
         post_data = {'key': str(key)}
         data = self.connect('put',"nodes/%s/qemu/%s/sendkey" % (node,vmid), post_data)
