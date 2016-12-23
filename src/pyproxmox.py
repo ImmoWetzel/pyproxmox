@@ -113,15 +113,21 @@ class pyproxmox:
             self.returned_data = self.response.json()
             self.returned_data.update({'status':{'code':self.response.status_code,'ok':self.response.ok,'reason':self.response.reason}})
             return self.returned_data
+
         except:
-            print("Error in trying to process JSON")
-            print(self.response)
+            print("pyproxmox: Error in trying to process JSON")
+            print("pyproxmox: Response: %s" % self.response)
+            print("pyproxmox: Reason: %s" % self.response.reason)
+            print("pyproxmox: RequestURL: %s" % self.response.url)
+            print "pyproxmox: Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1]))
+
             if self.response.status_code==401 and (not sys._getframe(1).f_code.co_name == sys._getframe(0).f_code.co_name):
-                print "Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1]))
-                print "try to recover connection auth"
+                print "pyproxmox: try to recover connection auth - sometimes tickets are expired... just retry"
                 self.auth_class.setup_connection()
                 self.get_auth_data()
-                return self.connect(conn_type, option, post_data)
+                return_data=self.connect(conn_type, option, post_data)
+                print "pyproxmox: retry ... successful"
+                return return_data
 
 
     """
@@ -631,7 +637,7 @@ class pyproxmox:
     # KVM
     def setVirtualMachineOptions(self,node,vmid,post_data):
         """Set KVM virtual machine options."""
-        data = self.connect('put',"nodes/%s/qemu/%s/config" % (node,vmid), post_data)
+        data = self.connect('push',"nodes/%s/qemu/%s/config" % (node,vmid), post_data)
         return data
 
     def sendKeyEventVirtualMachine(self,node,vmid, key):
